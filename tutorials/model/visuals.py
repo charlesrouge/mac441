@@ -82,29 +82,33 @@ def compare_storage_timeseries(reservoir, storage_1, storage_2, labels, **kwargs
     return fig
 
 
-def flow_timeseries(balance, flux_name, **kwargs):
+def flow_timeseries(time_series, **kwargs):
     """
     Plots daily timeseries of a water balance flow component over time. Arguments:
-        balance: a Pandas DataFrame containing the time series of the water flux to plot
-        flux_name: a string with the name of the flow component to plot
+        balance: a Pandas Series containing the time series to plot
         optional argument `first_date`: a datetime date to specify when to start plotting
         optional argument `last_date`: a datetime date to specify when to stop plotting
     Returns the matplotlib figure created, for plotting / saving, etc.
     """
 
     # Optional arguments
-    first_date = kwargs.pop("first_date", balance.index[0])
-    last_date = kwargs.pop('last_date', balance.index[-1])
+    first_date = kwargs.pop("first_date", time_series.index[0])
+    last_date = kwargs.pop('last_date', time_series.index[-1])
 
+    # Define Figure object
     fig = plt.figure(figsize=(14, 8))
     ax = fig.add_subplot(1, 1, 1)
+
+    # Plot
     ax.plot(pd.date_range(start=first_date, end=last_date, freq='D'),
-            balance.loc[first_date:last_date, flux_name + ' (m3/s)'], c='b', linewidth=2)
+            time_series.loc[first_date:last_date], c='b', linewidth=2)
+
+    # Axes specifications
     ax.set_xlabel('Date', size=16)
-    ax.set_ylabel(flux_name + ' (m3/s)', size=16)
+    ax.set_ylabel(time_series.name + ' (m3/s)', size=16)
     ax.tick_params(axis='both', which='major', labelsize=14)
     ax.set_xlim(first_date, last_date)
-    ax.set_ylim(0,  balance.loc[first_date:last_date, flux_name + ' (m3/s)'].max()*1.1)
+    ax.set_ylim(0, time_series.loc[first_date:last_date].max() * 1.1)
 
     return fig
 
