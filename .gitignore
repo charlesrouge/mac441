@@ -1,6 +1,6 @@
 # Data input and output folders
 tutorials/data/
-tutorials/fiures
+tutorials/results
 
 # Node artifact files
 node_modules/

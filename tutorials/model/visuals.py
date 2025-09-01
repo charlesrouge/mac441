@@ -155,25 +155,28 @@ def compare_flow_timeseries(reference, alternative, labels, **kwargs):
     ax.set_ylim(0, y_max*1.1)
     ax.legend(prop={'size': 14})
 
-
-
     return fig
 
 
-def compute_monthly_average(flows):
+def compute_monthly_averages(flows):
     """
     Computes monthly average inflows from a `flows` pandas Series.
     Output:
-    averages: a Numpy vector of size 12 for the 12 average monthly values
+    averages: a Numpy array of size ((nb_years, 12)) for the 12 average monthly values for each year.
     """
 
+    # Parameter: number of years
+    nb_years = flows.index[-1].year - flows.index[0].year + 1
+
     # Initialise output
-    averages = np.zeros(12)
+    averages = np.zeros((nb_years, 12))
+
+    # Get the time series of monthly flow averages
+    monthly_av = flows.resample('ME').mean()
 
     # Main loop to compute all 12 monthly averages
-    for month in np.arange(1, 13, 1):
-        monthly_mask = flows.index.month == month  # Select only values for the right month
-        averages[month - 1] = flows.loc[monthly_mask].mean()  # Apply average operator
+    for month in range(12):
+        averages[:, month] = monthly_av[monthly_av.index.month == month + 1]
 
     return averages
 
@@ -184,15 +187,23 @@ def monthly_averages(flows, **kwargs):
     """
 
     # Optional argument
-    yaxis_label = kwargs.pop('yaxis_label', 'Average inflows (m3/s)')
+    yaxis_label = kwargs.pop('yaxis_label', 'Average inflows (m3/s)')  # Label for the y-axis
+    plot_all_years = kwargs.pop('plot_all_years', False)  # Whether we plot individual years or only the average
 
     # Get monthly average inflows
-    monthly_average = compute_monthly_average(flows)
+    monthly_means = compute_monthly_averages(flows)
+    annual_cycle = np.mean(monthly_means, axis=0)
 
     # Plot figure
     fig = plt.figure(figsize=(14, 8))
     ax = fig.add_subplot(1, 1, 1)
-    ax.plot(np.arange(1, 13, 1), monthly_average, c='b')
+    if plot_all_years is True:
+        ax.plot(np.arange(1, 13, 1), annual_cycle, c='black', linewidth=2, label='Average')
+        ax.legend()
+        for yr in range(monthly_means.shape[0]):
+            ax.plot(np.arange(1, 13, 1), monthly_means[yr, :], c='b')
+        ax.set_ylim(0, np.max(np.max(monthly_means)))
+    ax.plot(np.arange(1, 13, 1), annual_cycle, c='black', linewidth=2)
     plt.xticks(ticks=np.arange(1, 13, 1), labels=['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'])
     ax.tick_params(axis='both', which='major', labelsize=14)
     ax.set_xlabel('Month', size=16)
@@ -216,10 +227,10 @@ def compare_monthly_averages(reference, alternative, labels, **kwargs):
     alternative_2 = kwargs.pop('alternative_2', pd.Series(dummy_array))
 
     # First, compute monthly averages for both DataFrames
-    average_1 = compute_monthly_average(reference)
-    average_2 = compute_monthly_average(alternative)
+    average_1 = np.sum(compute_monthly_averages(reference), axis=0)
+    average_2 = np.sum(compute_monthly_averages(alternative), axis=0)
     if alternative_2.hasnans is False:  # There is a third time series
-        average_3 = compute_monthly_average(alternative_2)
+        average_3 = np.sum(compute_monthly_averages(alternative_2), axis=0)
 
     # Plot figure
     fig = plt.figure(figsize=(14, 8))
