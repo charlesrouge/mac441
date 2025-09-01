@@ -1,6 +1,5 @@
 # Data input and output folders
 tutorials/data/
-tutorials/results
 
 # Node artifact files
 node_modules/
@@ -49,5 +48,3 @@ Thumbs.db
 
 # Data files
 *.xlsx
-*.csv
-
