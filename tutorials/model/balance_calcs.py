@@ -108,6 +108,73 @@ def sop_single_step(reservoir, storage_beg, inflows, site_demand, downstream_dem
     return storage_end, release, withdrawals
 
 
+def monthly_storage_targets(reservoir, water_flows, monthly_target):
+    """
+    This function does the water balance assuming hydropower-friendly storage targets.
+    After demands have been met, if storage is higher than the target that month, release is increased in the limit of
+    max hydropower release.
+    :param reservoir: object of the Reservoir class
+    :param water_flows: pandas DataFrame of the inflows and demands
+    :param monthly_target: numpy vector of length 12, storage target for each month (in m3)
+    :return: updated DataFrame`water_flows` with all elements of the water balance
+    """
+
+    # Local variable: number of time steps
+    t_total = len(water_flows)
+
+    # Local variable: number of seconds in a day
+    n_sec = 86400
+
+    # Month for each day
+    month_nb = water_flows.index.month.to_numpy()
+
+    # For computing efficiency: convert flows to numpy arrays outside of time loop
+
+    # Inflows (in m3)
+    inflows = water_flows['Total inflows (m3/s)'].to_numpy() * n_sec
+
+    # Total downstream demand (in m3), including firm power
+    downstream_demands = downstream_demand_init(reservoir, water_flows, n_sec)
+
+    # Total at-site demands (in m3)
+    at_site_demands = local_demand_init(reservoir, water_flows, n_sec)
+
+    # Initialise outputs
+    # Storage needs to account for initial storage
+    storage = np.zeros(t_total + 1)
+    storage[0] = reservoir.initial_storage
+    # Initialise at-site withdrawals and outflows as water balance components
+    withdrawals = np.zeros((t_total, len(reservoir.demand_on_site)))
+    release = np.zeros(t_total)
+
+    # Main loop
+    for t in range(t_total):
+
+        # Start with SOP policy, then see if there is scope for releasing more
+        # Single-step water balance equation
+        wb_out = sop_single_step(reservoir, storage[t], inflows[t], at_site_demands[t, :], downstream_demands[t])
+        # Storing water balance outputs
+        storage[t+1] = wb_out[0]
+        release[t] = wb_out[1]
+        withdrawals[t, :] = wb_out[2]
+
+        # Is storage target is exceeded, release more
+        if storage[t+1] > monthly_target[month_nb[t]-1]:
+            # Release to get down to target, but only as long as it increases hydropower production
+            delta_release = min(storage[t+1] - monthly_target[month_nb[t]-1],
+                                max(0, reservoir.hydropower_plant.max_release * n_sec - release[t]))
+            release[t] = release[t] + delta_release
+            storage[t+1] = storage[t+1] - delta_release
+
+    # Insert data into water balance
+    for i in range(withdrawals.shape[1]):
+        water_flows['Withdrawals ' + reservoir.demand_on_site[i].name + ' (m3/s)'] = withdrawals[:, i] / n_sec
+    water_flows['Release (m3/s)'] = release / n_sec
+    water_flows['Storage (m3)'] = storage[1:]
+
+    return water_flows
+
+
 def downstream_demand_init(reservoir, water_flows, n_sec):
     """
     Initialise downstream demand for the water balance, in m3 and in numpy array format
