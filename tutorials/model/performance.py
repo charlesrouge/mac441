@@ -102,7 +102,9 @@ def reliability(time_series, dynamic_threshold, above_desirable):
     return 1 - np.sum(a < b) / len(time_series)
 
 
-def all_metrics(reservoir, water_balance):
+def all_metrics(reservoir, water_balance, **kwargs):
+
+    add_recreation = kwargs.pop('add_recreation', False)
 
     metrics = pd.concat([rrv_indicators(water_balance['Withdrawals Baltimore (m3/s)'].to_numpy(),
                                         water_balance['Baltimore demand (m3/s)'].to_numpy(), True, 'Baltimore'),
@@ -116,34 +118,40 @@ def all_metrics(reservoir, water_balance):
                                         15000 * np.ones(len(water_balance)), False, 'Flooding')],
                         axis=0, ignore_index=True)
 
-    # Summer recreation (lake levels need to stay above a certain level in June, July and August)
+    if add_recreation is True:
+        # Summer recreation (lake levels need to stay above a certain level in June, July and August)
 
-    # We need time series of level objectives. We initialise at 0 requirement.
-    level_objective = pd.Series(index=water_balance.index, data=np.zeros(len(water_balance)))
+        # We need time series of level objectives. We initialise at 0 requirement.
+        level_objective = pd.Series(index=water_balance.index, data=np.zeros(len(water_balance)))
 
-    # We set a level during summer months, to be compared with lake level (which coincide with hydraulic head)
-    summer_requirement = 106.5 * 0.3048
-    for month in np.arange(6, 9, 1):
-        level_objective[level_objective.index.month == month] = summer_requirement
+        # We set a level during summer months, to be compared with lake level (which coincide with hydraulic head)
+        summer_requirement = 106.5 * 0.3048
+        for month in np.arange(6, 9, 1):
+            level_objective[level_objective.index.month == month] = summer_requirement
 
-    # Get hydraulic head time series, assuming linear relationship between depth and lake area
-    hydraulic_head = np.zeros(len(water_balance))
-    for t in range(len(water_balance)):
-        depth = reservoir.get_height(water_balance.iloc[t, -1])
-        hydraulic_head[t] = reservoir.hydropower_plant.nominal_head - reservoir.total_lake_depth + depth
+        # Get hydraulic head time series, assuming linear relationship between depth and lake area
+        hydraulic_head = np.zeros(len(water_balance))
+        for t in range(len(water_balance)):
+            depth = reservoir.get_height(water_balance.iloc[t, -1])
+            hydraulic_head[t] = reservoir.hydropower_plant.nominal_head - reservoir.total_lake_depth + depth
 
-    # Get the indicators
-    recreation_metrics = rrv_indicators(hydraulic_head, level_objective.to_numpy(), True, 'Recreation', vul_unit='m')
+        # Get the indicators
+        recreation_metrics = rrv_indicators(hydraulic_head, level_objective.to_numpy(), True,
+                                            'Recreation', vul_unit='m')
 
-    # We need to account for the fact that this requirement is for three months only, which impacts reliability
-    # Failure happens more often if measured in the shorter time window
-    recreation_metrics.iloc[0, 1] = 1 - (1 - recreation_metrics.iloc[0, 1]) * len(level_objective) / (
+        # We need to account for the fact that this requirement is for three months only, which impacts reliability
+        # Failure happens more often if measured in the shorter time window
+        recreation_metrics.iloc[0, 1] = 1 - (1 - recreation_metrics.iloc[0, 1]) * len(level_objective) / (
                 70 * (30 + 31 + 31))
 
-    metrics = pd.concat([metrics, recreation_metrics], axis=0, ignore_index=True)
+        metrics = pd.concat([metrics, recreation_metrics], axis=0, ignore_index=True)
+
 
     # Add a new column, volumetric reliability
-    metrics.insert(5, 'Volumetric reliability', [0, 0, 0, 0, 'N/A', 'N/A'])
+    if add_recreation is True:
+        metrics.insert(5, 'Volumetric reliability', [0, 0, 0, 0, 'N/A', 'N/A'])
+    else:
+        metrics.insert(5, 'Volumetric reliability', [0, 0, 0, 0, 'N/A'])
 
     # Volumetric reliability is only defined for the demands, and it relies on the grand total supply / demand
     totals = water_balance.sum(axis=0)

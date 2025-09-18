@@ -105,7 +105,7 @@ def flow_timeseries(time_series, **kwargs):
 
     # Axes specifications
     ax.set_xlabel('Date', size=16)
-    ax.set_ylabel(time_series.name + ' (m3/s)', size=16)
+    ax.set_ylabel(time_series.name, size=16)
     ax.tick_params(axis='both', which='major', labelsize=14)
     ax.set_xlim(first_date, last_date)
     ax.set_ylim(0, time_series.loc[first_date:last_date].max() * 1.1)
@@ -121,6 +121,7 @@ def compare_flow_timeseries(reference, alternative, labels, **kwargs):
         labels: a list of two Strings for legend labels for the two time series above.
         optional argument `first_date`: a datetime date to specify when to start plotting
         optional argument `last_date`: a datetime date to specify when to stop plotting
+        optional argument `y_axis_label`: a String object if different from `alternative`
         optional argument `alternative_2`: a Pandas Series containing a third time series to plot
         Returns the matplotlib figure created, for plotting / saving, etc.
     """
@@ -128,6 +129,7 @@ def compare_flow_timeseries(reference, alternative, labels, **kwargs):
     # Optional arguments
     first_date = kwargs.pop("first_date", reference.index[0])
     last_date = kwargs.pop('last_date', reference.index[-1])
+    y_axis_label = kwargs.pop('y_axis_label', alternative.name)
     # If there are only two time series to compare
     dummy_array = np.empty(5)
     dummy_array[:] = np.nan
@@ -149,7 +151,7 @@ def compare_flow_timeseries(reference, alternative, labels, **kwargs):
 
     # Axes and legend specifications
     ax.set_xlabel('Date', size=16)
-    ax.set_ylabel(alternative.name, size=16)
+    ax.set_ylabel(y_axis_label, size=16)
     ax.tick_params(axis='both', which='major', labelsize=14)
     ax.set_xlim(first_date, last_date)
     ax.set_ylim(0, y_max*1.1)
