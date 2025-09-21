@@ -13,6 +13,7 @@ List of plotting methods within:
     - monthly_averages: compute average annual cycle of given variable, monthly time step
     - compare_monthly_averages: same for same given variable in 2 or 3 different cases
     - annual_average: annual average of quantity over time
+    - plot_regret: bar plots of regrets for a discrete sets of uncertain scenarios and levers
 '''
 
 
@@ -300,5 +301,50 @@ def annual_average(daily_data, data_label):
     ax.set_ylabel('Annual ' + data_label, size=16)
     ax.set_xlim(annual_data.index.year[0], annual_data.index.year[-1])
     ax.tick_params(axis='both', which='major', labelsize=14)
+
+    return fig
+
+
+def plot_regret(array, metric_name, ref_dim, lever_list, scenario_list, scenario_label):
+
+    # Compute regret (assuming more of the quantity in `array` is desirable. Otherwise pass `-array` as argument)
+    regret = np.zeros(array.shape)
+    for i in range(array.shape[ref_dim]):
+        if ref_dim == 0:  # Regret as deviation from most favourable lever, for each scenario
+            ref_value = np.max(array[i, :])
+            regret[i, :] = (ref_value - array[i, :]) / ref_value
+        else:  # Regret as deviation from most favourable scenario, for each lever
+            ref_value = np.max(array[:, i])
+            regret[:, i] = (ref_value - array[:, i]) / ref_value
+
+    # Plot definition
+    fig = plt.figure(figsize=(14, 8))
+    ax = fig.add_subplot(1, 1, 1)
+
+    # Heatmap
+    if ref_dim == 0:
+        im = ax.imshow(regret, cmap='inferno')
+        cbar = ax.figure.colorbar(im, ax=ax)
+        cbar.ax.set_ylabel('Deviation from most favourable lever', size=14, rotation=-90, va="bottom")
+        ax.set_xticks(np.arange(regret.shape[1]))
+        ax.set_xticklabels(lever_list)
+        ax.set_xlabel('Levers', size=16)
+        ax.set_yticks(np.arange(regret.shape[0]))
+        ax.set_yticklabels(scenario_list)
+        ax.set_ylabel(scenario_label, size=16)
+
+    else:
+        im = ax.imshow(np.transpose(regret), cmap='inferno')
+        cbar = ax.figure.colorbar(im, ax=ax)
+        cbar.ax.set_ylabel('Deviation from most favourable scenario', size=14, rotation=-90, va="bottom")
+        ax.set_xticks(np.arange(regret.shape[0]))
+        ax.set_xticklabels(scenario_list)
+        ax.set_xlabel(scenario_label, size=16)
+        ax.set_yticks(np.arange(regret.shape[1]))
+        ax.set_yticklabels(lever_list)
+        ax.set_ylabel('Levers', size=16)
+
+
+    ax.set_title(metric_name, size=18)
 
     return fig
