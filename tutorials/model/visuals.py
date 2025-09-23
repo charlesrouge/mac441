@@ -306,6 +306,16 @@ def annual_average(daily_data, data_label):
 
 
 def plot_regret(array, metric_name, ref_dim, lever_list, scenario_list, scenario_label):
+    """
+    Plot regret as a heatmap.
+    :param array: numpy 2D array
+    :param metric_name: string, name of the metric
+    :param ref_dim: int, 0 if regret as deviation from best lever, 1 if regret as deviation from best scenario
+    :param lever_list: list of strings, levers considered in the analysis
+    :param scenario_list: list of scenarios, scenarios considered in the analysis
+    :param scenario_label: string to label the scenarios (e.g., according to which variable?)
+    :return: fig, the heatmap figure
+    """
 
     # Compute regret (assuming more of the quantity in `array` is desirable. Otherwise pass `-array` as argument)
     regret = np.zeros(array.shape)
@@ -344,7 +354,7 @@ def plot_regret(array, metric_name, ref_dim, lever_list, scenario_list, scenario
         ax.set_yticklabels(lever_list)
         ax.set_ylabel('Levers', size=16)
 
-
+    # Title
     ax.set_title(metric_name, size=18)
 
     return fig
