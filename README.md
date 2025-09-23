@@ -42,7 +42,7 @@ Note `/E` is needed to copy subfolders and files within them; otherwise only fil
 => To create the virtual environment from the yml file: open the directory containing the `environment.yml` file and type in terminal
 `conda env create -f environment.yml`
 
-NOTE: Running this command may take long time i.e 10-15 mins on the University machine. Wait patiently. Once completed, you do not need to run it again!
+NOTE: Running this command may take long time i.e 10-15 minutes on the University machine. Wait patiently. Once completed, you do not need to run it again!
 
 => Or if you cannot create the environment on the University machine, still create a new environment and work in it. This will keep track of libraries used and versions as you go!
 `conda env create --name mac441`
@@ -50,4 +50,4 @@ NOTE: Running this command may take long time i.e 10-15 mins on the University m
 => type in terminal
 `python -m ipykernel install --user --name=mac441`
 
-=> in Jupyer Notebook click on `Python 3 (ipykernel)` in the top right, and replace with `mac441` as a kernel
+=> in Jupyter Notebook click on `Python 3 (ipykernel)` in the top right, and replace with `mac441` as a kernel
