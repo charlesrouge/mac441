@@ -1,9 +1,13 @@
 # Data input and output folders
 tutorials/data/
+tutorials/previous/
+tutorials/.ipynb_checkpoints/
 
 # Node artifact files
 node_modules/
 dist/
+brouillon.py
+.ipynb_checkpoints/
 
 # Compiled Java class files
 *.class
