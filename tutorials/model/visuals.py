@@ -221,6 +221,7 @@ def compare_monthly_averages(reference, alternative, labels, **kwargs):
     Plot a comparison of monthly average inflows from two time series. Arguments:
         reference: pandas DataFrame containing a column with reference inflows
         alternative: pandas DataFrame containing a column with alternative inflows
+        optional argument `alternative_2`: a Pandas Series containing a third time series to plot
         labels: list of two Strings, the labels to insert in the figure's legend
     """
 
@@ -230,10 +231,10 @@ def compare_monthly_averages(reference, alternative, labels, **kwargs):
     alternative_2 = kwargs.pop('alternative_2', pd.Series(dummy_array))
 
     # First, compute monthly averages for both DataFrames
-    average_1 = np.sum(compute_monthly_averages(reference), axis=0)
-    average_2 = np.sum(compute_monthly_averages(alternative), axis=0)
+    average_1 = np.mean(compute_monthly_averages(reference), axis=0)
+    average_2 = np.mean(compute_monthly_averages(alternative), axis=0)
     if alternative_2.hasnans is False:  # There is a third time series
-        average_3 = np.sum(compute_monthly_averages(alternative_2), axis=0)
+        average_3 = np.mean(compute_monthly_averages(alternative_2), axis=0)
 
     # Plot figure
     fig = plt.figure(figsize=(14, 8))
