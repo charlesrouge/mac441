@@ -1,3 +1,6 @@
+# Custom files
+tutorials/Tutorial_7_LakeProblem_full.ipynb
+
 # Data input and output folders
 tutorials/data/
 tutorials/previous/
@@ -42,13 +45,14 @@ Thumbs.db
 *.exe
 *.war
 
-# Large media files
+# (Large) media files
 *.mp4
 *.tiff
 *.avi
 *.flv
 *.mov
 *.wmv
+*.png
 
 # Data files
 *.xlsx
