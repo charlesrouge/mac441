@@ -57,3 +57,4 @@ Thumbs.db
 # Data files
 *.xlsx
 *.npy
+*.pkl
